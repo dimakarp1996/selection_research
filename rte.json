@@ -1,0 +1,125 @@
+{
+	"metadata": {
+		"variables": {
+			"ROOT_PATH": "/cephfs/home/karpov_d/selection_research",
+			"MODELS_PATH": "{ROOT_PATH}/models",
+			"NUM_TRAIN_EPOCHS": 5,
+			"NAME": "rte",
+			"SEQ_LEN": 128,
+			"GRADIENT_ACC_STEPS": 1,
+			"BATCH_SIZE": 32,
+			"BACKBONE_MODEL": "bert-base-cased",
+			"SEED": 42
+		}
+	},
+	"dataset_reader": {
+		"class_name": "multitask_reader",
+		"path": "super_glue",
+		"reader_class_name": "huggingface_dataset_reader",
+		"train": "train",
+		"valid": "validation",
+		"task_names": [
+			"rte"
+		]
+	},
+	"dataset_iterator": {
+		"class_name": "multitask_iterator",
+		"num_train_epochs": "{NUM_TRAIN_EPOCHS}",
+		"gradient_accumulation_steps": "{GRADIENT_ACC_STEPS}",
+		"iterator_class_name": "huggingface_dataset_iterator",
+		"label": "label",
+		"sampling_mode": "plain",
+		"use_label_name": false,
+		"seed": 42,
+		"tasks": {
+			"rte": {
+				"features": ["premise", "hypothesis"]
+			}
+		}
+	},
+	"chainer": {
+		"in": ["x_rte"],
+		"in_y": ["y_rte"],
+		"pipe": [{
+				"class_name": "multitask_pipeline_preprocessor",
+				"possible_keys_to_extract": [
+					0,
+					1
+				],
+				"preprocessors": ["TorchTransformersPreprocessor"],
+				"vocab_file": "{BACKBONE_MODEL}",
+				"max_seq_length": 128,
+				"do_lower_case": false,
+				"in": ["x_rte"],
+				"out": ["bert_features_rte"]
+			},
+			{
+				"id": "multitask_bert",
+				"class_name": "multitask_bert",
+				"backbone_model": "{BACKBONE_MODEL}",
+				"optimizer_parameters": {
+					"lr": 2e-5
+				},
+				"gradient_accumulation_steps": "{GRADIENT_ACC_STEPS}",
+				"learning_rate_drop_patience": 2,
+				"learning_rate_drop_div": 2.0,
+				"return_probas": true,
+				"max_seq_len": "{SEQ_LEN}",
+				"save_path": "{MODELS_PATH}/{NAME}",
+				"load_path": "{MODELS_PATH}/{NAME}",
+				"tasks": {
+					"rte": {
+						"type": "classification",
+						"options": 2
+					}
+				
+				},
+				"in": [
+					"bert_features_rte"
+				],
+				"in_y": [
+					"y_rte"
+				],
+				"out": [
+					"y_rte_pred_probas"
+				]
+			},
+			{
+				"in": [
+					"y_rte_pred_probas"
+				],
+				"out": [
+					"y_rte_pred"
+				],
+				"class_name": "proba2labels",
+				"max_proba": true
+			}
+		],
+		"out": [
+			"y_rte_pred_probas", 
+			"y_rte_pred"
+		]
+	},
+	"train": {
+		"epochs": "{NUM_TRAIN_EPOCHS}",
+		"batch_size": "{BATCH_SIZE}",
+		"metrics": [
+			{
+				"name": "accuracy",
+				"alias": "accuracy_rte",
+				"inputs": [
+					"y_rte",
+					"y_rte_pred"
+				]
+			}
+		],
+		"validation_patience": 3,
+		"val_every_n_epochs": 1,
+		"log_every_n_epochs": 1,
+		"show_examples": true,
+		"evaluation_targets": [
+			"valid", "train"
+		],
+		"class_name": "torch_trainer"
+	}
+}
