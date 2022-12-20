@@ -58,7 +58,7 @@
 					0,
 					1
 				],
-				"preprocessors": ["TorchTransformersPreprocessor", "TorchTransformersPreprocessor", "TorchTransformersMultipleChoicePreprocessor", "TorchTransformersPreprocessor"],
+				"preprocessors": ["TorchTransformersPreprocessor", "TorchTransformersPreprocessor", "TorchTransformersMultiplechoicePreprocessor", "TorchTransformersPreprocessor"],
 				"vocab_file": "{BACKBONE_MODEL}",
 				"max_seq_length": 128,
 				"do_lower_case": false,
