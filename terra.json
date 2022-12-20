@@ -1,7 +1,7 @@
 {
 	"metadata": {
 		"variables": {
-			"ROOT_PATH": "/cephfs/home/karpov_d/selection_research",
+			"ROOT_PATH": "/cephfs/home/karpov.d/selection_research",
 			"MODELS_PATH": "{ROOT_PATH}/models",
 			"NUM_TRAIN_EPOCHS": 5,
 			"NAME": "terra",
